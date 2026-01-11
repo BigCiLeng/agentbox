@@ -29,23 +29,12 @@ services:
       # 你的代码目录
       - /baai-cwm-vepfs/cwm/nan.wang/code:/workspace
 
-      # ssh/gitconfig：挂到 node 的 home
+      # 持久化整个 /home/node 目录（所有配置、缓存、数据都在这里）
+      - agentbox_home:/home/node
+
+      # ssh/gitconfig：从宿主机挂载（覆盖 volume 中的对应部分，只读）
       - ~/.ssh:/home/node/.ssh:ro
       - ~/.gitconfig:/home/node/.gitconfig:ro
-      # bashrc：持久化保存（如果宿主机存在 ~/.bashrc 则优先使用，否则使用 volume 中的配置）
-      - agentbox_bashrc:/home/node/.bash_config
-
-      # caches & configs
-      - agentbox_npm:/home/node/.npm
-      - agentbox_cache:/home/node/.cache
-      - agentbox_config:/home/node/.config
-      - agentbox_npm_global:/home/node/.npm-global
-      - agentbox_clash:/home/node/clash-for-linux
 
 volumes:
-  agentbox_npm:
-  agentbox_cache:
-  agentbox_config:
-  agentbox_npm_global:
-  agentbox_clash:
-  agentbox_bashrc:
+  agentbox_home:

@@ -15,7 +15,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 # ---- System packages ----
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git openssh-client ca-certificates curl wget jq less vim \
+    git openssh-client ca-certificates curl wget jq less vim procps \
     ripgrep fd-find tmux \
     python3 python3-venv python3-pip \
     unzip xz-utils \
@@ -53,14 +53,16 @@ RUN npm i -g @google/gemini-cli opencode-ai @openai/codex
 
 # (Optional but recommended) preinstall oh-my-opencode package so bunx won't download every time
 # You can pin a beta version if you want: oh-my-opencode@3.0.0-beta.1  [oai_citation:5‡GitHub](https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/refs/heads/master/README.md)
-RUN npm i -g oh-my-opencode
+
+# Install oh-my-opencode configuration
+RUN npx oh-my-opencode install --no-tui --claude="no" --chatgpt="yes" --gemini="yes" || true
 
 # --- Helper: one-command installer for oh-my-opencode ---
-# README: bunx oh-my-opencode install ... and supports --no-tui + subscription flags.  [oai_citation:6‡GitHub](https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/refs/heads/master/README.md)
+# README: npx oh-my-opencode install ... and supports --no-tui + subscription flags.  [oai_citation:6‡GitHub](https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/refs/heads/master/README.md)
 RUN cat > /home/node/.npm-global/bin/omo-install <<'EOF' && chmod +x /home/node/.npm-global/bin/omo-install
 #!/usr/bin/env bash
-# Use bunx as recommended by the project README
-exec bunx oh-my-opencode install --no-tui --claude="no" --chatgpt="yes" --gemini="yes"
+# Use npx as recommended
+exec npx oh-my-opencode install --no-tui --claude="no" --chatgpt="yes" --gemini="yes"
 EOF
 
 WORKDIR /workspace
