@@ -16,15 +16,23 @@ if [ "$(id -u)" = "0" ]; then
   exec gosu node "$0" "$@"
 fi
 
-cd /workspace || true
+# Change to workspace directory
+cd /workspace || {
+  echo "Warning: /workspace directory not found, continuing in current directory" >&2
+}
 
 # Optional auto tmux
 if [[ "${AUTO_TMUX:-0}" == "1" ]]; then
   SESSION="${TMUX_SESSION:-agent}"
   if command -v tmux >/dev/null 2>&1; then
-    tmux has-session -t "$SESSION" 2>/dev/null || tmux new-session -d -s "$SESSION"
+    if ! tmux has-session -t "$SESSION" 2>/dev/null; then
+      tmux new-session -d -s "$SESSION"
+    fi
     exec tmux attach -t "$SESSION"
+  else
+    echo "Warning: tmux not found, skipping auto tmux" >&2
   fi
 fi
 
+# Execute the command
 exec "$@"

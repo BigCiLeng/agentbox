@@ -1,9 +1,10 @@
 services:
   agentbox:
+    userns_mode: host
     build:
       context: .
+      # Optional: proxy args for build stage
       # args:
-      #   # 让容器内 dev 用户和宿主机用户 UID/GID 对齐，避免挂载权限乱
       #   HTTP_PROXY:  http://127.0.0.1:29870
       #   HTTPS_PROXY: http://127.0.0.1:29870
       #   ALL_PROXY:   socks5://127.0.0.1:29871
@@ -11,12 +12,19 @@ services:
 
     image: agentbox:latest
     container_name: agentbox
+    
+    # Interactive terminal
     tty: true
     stdin_open: true
+    
+    # Working directory
     working_dir: /workspace
 
+    # Run as root initially (entrypoint will drop to node user)
     user: "0:0"
-    # 推荐用 .env 注入 key，不要写进镜像/compose
+    
+    # Environment configuration
+    # Recommended: use .env file for sensitive keys, don't hardcode in compose
     env_file:
       - .env
 
@@ -26,15 +34,41 @@ services:
       GIT_SSH_COMMAND: "ssh -o ServerAliveInterval=30 -o ServerAliveCountMax=6"
 
     volumes:
-      # 你的代码目录
+      # Code workspace directory
       - /baai-cwm-vepfs/cwm/nan.wang/code:/workspace
 
-      # 持久化整个 /home/node 目录（所有配置、缓存、数据都在这里）
+      # Persist entire /home/node directory (configs, cache, data)
       - agentbox_home:/home/node
 
-      # ssh/gitconfig：从宿主机挂载（覆盖 volume 中的对应部分，只读）
+      # SSH and git config from host (read-only, overrides volume)
       - ~/.ssh:/home/node/.ssh:ro
       - ~/.gitconfig:/home/node/.gitconfig:ro
 
+    # Resource limits (adjust based on your needs)
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '1'
+          memory: 2G
+
+    # Restart policy
+    restart: unless-stopped
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "node", "--version"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+
 volumes:
   agentbox_home:
+    driver: local
